@@ -49,8 +49,52 @@ STRING "   NOZ    ",32, 122, 32, 18, 32, 39
 STRING " AMENDOIM ",32, 123, 32, 08, 32, 03  
 STRING "   CAFÉ   ",32, 124, 32, 20, 32, 25
 
-PLACE 3150H
-;MENUS 7 X 16
+; MENUS 
+PLACE 3250H
+
+MenuProdutos:
+    STRING "   UVAS   --",32, 100, 32, 32, 32, 32 ; 5.34
+    STRING " MELANCIA --",32, 101, 32, 32, 32, 32
+    STRING "  ANANÁS  --",32, 102, 32, 32, 32, 32
+    STRING "   KIWI   --",32, 103, 32, 32, 32, 32
+    STRING " PÊSSEGO  --",32, 104, 32, 32, 32, 32
+    STRING "  BANANA  --",32, 105, 32, 32, 32, 32
+    STRING " MORANGO  --",32, 106, 32, 32, 32, 32
+    STRING "FRAMBOESA --",32, 107, 32, 32, 32, 32
+    STRING " LARANJA  --",32, 108, 32, 32, 32, 32
+    STRING "TANGERINA --",32, 109, 32, 32, 32, 32
+    STRING " CENOURA  --",32, 110, 32, 32, 32, 32
+    STRING "  BATATA  --",32, 111, 32, 32, 32, 32
+    STRING "   NABO   --",32, 112, 32, 32, 32, 32
+    STRING "BETERRABA --",32, 113, 32, 32, 32, 32
+    STRING "   ALHO   --",32, 114, 32, 32, 32, 32
+    STRING "  CEBOLA  --",32, 115, 32, 32, 32, 32
+    STRING " ERVILHA  --",32, 116, 32, 32, 32, 32
+    STRING "LENTILHAS --",32, 117, 32, 32, 32, 32
+    STRING "  TRIGOS  --",32, 118, 32, 32, 32, 32
+    STRING "  MILHO   --",32, 119, 32, 32, 32, 32
+    STRING "  FAVAS   --",32, 120, 32, 32, 32, 32
+    STRING "CASTANHAS --",32, 121, 32, 32, 32, 32
+    STRING "   NOZ    --",32, 122, 32, 32, 32, 32
+    STRING " AMENDOIM --",32, 123, 32, 32, 32, 32  
+    STRING "   CAFÉ   --",32, 124, 32, 32, 32, 32
+
+MenuPrincipal:
+    STRING " MENU PRINCIPAL "
+    STRING "                "
+    STRING "1  -  BALANÇA   "
+    STRING "2  -  REGISTOS  "
+    STRING "----------------"
+    STRING "3  -  LIMPA     "
+    STRING "      REGISTOS  "
+MenuBalanca:
+    STRING "PRODUTO:        "
+    STRING "                "
+    STRING "PESO:           "
+    STRING "                "
+    STRING "PREÇO:          "
+    STRING "                "
+    STRING "TOTAL: " ; 9 Celulas para por o valor
 
 
 ; Configuração da Stack
@@ -156,8 +200,6 @@ OpcaoProduto:
 
 ; PARA FAZER
 
-Tabela: ; Nome  /  Codigo / PrecoKilo
-        ; MAX 9 /    1    /    2      PALAVRAS
 AtualizaDisplay: ;Peso == 0
 
 FuncaoReset:
@@ -166,7 +208,3 @@ GuardaRegistos:
 LimpaDisplay:
 LimpaPerifericos:
 MostraDisplay:
-
-MenuPrincipal ;(Strings)
-MenuBalanca   ;(Strings)
-MenuProdutos  ;(Strings)

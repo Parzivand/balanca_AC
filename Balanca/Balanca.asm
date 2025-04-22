@@ -1,14 +1,14 @@
 ; Localização dos perifericos de entrada
-ON_OFF      EQU 270H
-SEL_NR_MENU EQU 280H
-OK          EQU 290H
-CHANGE      EQU 2A0H
-CANCEL      EQU 2B0H
-PESO        EQU 2C0H
+ON_OFF      EQU 670H
+SEL_NR_MENU EQU 680H
+OK          EQU 690H
+CHANGE      EQU 6A0H
+CANCEL      EQU 6B0H
+PESO        EQU 6C0H
 
 ; Localização dos periféricos de saída
-Display         EQU 200H
-Fim_Display     EQU 26FH
+Display         EQU 600H
+Fim_Display     EQU 66FH
 CaracterVazio   EQU 20H
 
 
@@ -26,7 +26,7 @@ MensagemErro    EQU 400H
 
 ; Localização do banco de registos
 BancoRegistos       EQU 4000H
-QuantidadeRegistos  EQU 0
+QuantidadeRegistos  EQU 3FF0H
 
 ; Configuração da Stack
 Place 2000H
@@ -112,14 +112,21 @@ PLACE 3250H
         STRING "                "
         STRING "TOTAL:          " ; 9 Celulas para por o valor
     MenuGuardaRegistos:                         ; ALTERAR
-    STRING " MENU PRINCIPAL "
-    STRING "                "
-    STRING "1  -  BALANÇA   "
-    STRING "2  -  REGISTOS  "
-    STRING "----------------"
-    STRING "3  -  LIMPA     "
-    STRING "      REGISTOS  "
-
+        STRING " MENU PRINCIPAL "
+        STRING "                "
+        STRING "1  -  BALANÇA   "
+        STRING "2  -  REGISTOS  "
+        STRING "----------------"
+        STRING "3  -  LIMPA     "
+        STRING "      REGISTOS  "
+    MenuReset:
+        STRING " QUERES APAGAR  "
+        STRING " OS REGISTOS ?  "
+        STRING " -------------- "
+        STRING "1  -  SIM       "
+        STRING "2  -  NÃO       "
+        STRING "                "
+        STRING "                "
 
 
 
@@ -176,8 +183,7 @@ CicloOpcao:
     CALL RotinaErro
     JMP InicioMenu
 
-FIMInicio:
-    JMP InicioMenu
+
 
 
 ; --------------------------------- ;
@@ -246,8 +252,7 @@ CalculaPreco:
     MOVB R7, [R2]                    ; R7 guarda a parte fracionaria do valor  
     MUL R7, R1
     JV ErroOverflow
-    CALL AtualizaDisplay            ; R5 - Produto, R6 - PrecoInteiro, R7 - PrecoFracionario, Nome???
-
+    CALL AtualizaDisplay            ; R5 - Produto, R6 - PrecoInteiro, R7 - PrecoFracionario, R1 - PESO
     MOV R2, MenuGuardaRegistos
     CALL MostraDisplay
     CALL LimpaPerifericos
@@ -257,7 +262,7 @@ CicloOpcaoRegistos:
     CMP R3, 0
     JEQ CicloOpcaoRegistos
     CMP R3, 1
-    JEQ GuardaRegistos
+    JEQ AtalhoGuarda
     CMP R3, 2
     JEQ FIMBalanca
 ErroOverflow:
@@ -275,6 +280,10 @@ OpcaoExcedida:
 PulaReset:
     JMP FuncaoReset
 
+FIMInicio:
+    JMP InicioMenu
+AtalhoGuarda:
+    JMP GuardaRegistos
 ; --------------------------------- ;
 ; OlhaRegistos ;
 ; --------------------------------- ;
@@ -282,18 +291,19 @@ PulaReset:
         CALL LimpaPerifericos
         MOV R0, BancoRegistos
         MOV R1, [R0]                    ; R1 guarda o primeiro Registo
-        MOV R3, QuantidadeRegistos      ; R3 guarda a quantidade de registos que possuem
-        CMP R3, 0
+        MOV R3, QuantidadeRegistos      ; R3 guarda o endereco da quantidade de registos que possuem
+        MOV R2, [R3]                    ; R2 guarda o valor da quantidade de registos
+        CMP R2, 0
         JEQ ErroRegistos
         MOV R0, Display
     CicloMostraRegisto:
         CALL LimpaDisplay
-        SUB R3, 1
+        SUB R2, 1
         MOVB [R0], R1                   ; Print do Peso
         ADD R0, 1                   
         ADD R1, 1
         MOVB [R0], R1                   ; Print do valor Total
-        CMP R3, 0                       ; Verifica se chegou no final dos registos
+        CMP R2, 0                       ; Verifica se chegou no final dos registos
         JEQ FimHistorico
         ADD R1, 1                       ; Proximo Registo
         MOV R8, 15
@@ -387,10 +397,52 @@ PulaReset:
 ; PARA FAZER
 
 AtualizaDisplay: ;Peso == 0
+    ; R1 - PESO, 
     JMP FIMInicio
 FuncaoReset:
-    JMP FIMInicio
-GuardaRegistos:
-    JMP FIMInicio
+    MOV R2, MenuReset
+    CALL LimpaPerifericos
+    CALL MostraDisplay
+    MOV R0, OK
+    MOV R1, [R0]
+    CMP R1, 0
+    JZ FIMInicio
+CicloReset:
+    MOV R2, QuantidadeRegistos  ; R2 guarda o endereco da quantidade de registos
+    MOV R1, [R2]                ; R1 guarda a quantidade de registos
+    MOV R4, 0
+    CMP R1, R4
+    JZ FIMInicio              
+    MOV R0, BancoRegistos       ; R0 guarda o endereco do banco de registos
+    MOV [R0], R4                ; Poe a zero o primeiro registo
+    ADD R0, 2                   ; Vai ao proximo registo
+    SUB R1, 1                   ; Decrementa a quantidade de registos
+    MOV [R2], R1
+    JMP CicloReset
+
+
+GuardaRegistos: ;R5 - Produto, R6 - PrecoInteiro, R7 - PrecoFracionario, R1 - PESO
+    MOV R10, QuantidadeRegistos ; R10 guarda o endereco da quantidade de registos 
+    MOV R3, [R10]               ; R3 guarda a quantidade de registos
+    MOV R0, BancoRegistos       ; R0 guarda o endereco do banco de registos
+    SHL R3, 2                   ; R3 ← R3 * 4
+    ADD R3, [R10]               ; R3 ← R3 + quantidade → total = quantidade * 5                   
+    ADD R0, R3                  ; Vai a posicao livre ddo banco de registo
+    ; Guardar os dados
+    MOVB [R0], R5               ; Produto
+    ADD R0, 2
+    MOVB [R0], R1               ; Peso
+    ADD R0, 2
+    MOVB [R0], R6               ; Parte inteira do preço
+    ADD R0, 2
+    MOV R9, 46                  ; Caractere de vírgula
+    MOVB [R0], R9
+    ADD R0, 2
+    MOVB [R0], R7               ; Parte fracionária do preço
+    MOV R3, [R10]               ; Voltar a buscar quantidade
+    ADD R3, 1
+    MOV [R10], R3
+    JMP FIMBalanca
+
 RotinaErro:
     JMP FIMInicio

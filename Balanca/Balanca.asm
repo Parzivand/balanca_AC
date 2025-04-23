@@ -69,7 +69,7 @@ PLACE 3000H
 PLACE 3250H
 
     MenuProdutos:
-        STRING "   UVAS   --",32, 100, 32, 32, 32, 32 ; 5.34
+        STRING "   UVAS   --",32, 100, 32, 32, 32, 32 
         STRING " MELANCIA --",32, 101, 32, 32, 32, 32
         STRING "  ANANÁS  --",32, 102, 32, 32, 32, 32
         STRING "   KIWI   --",32, 103, 32, 32, 32, 32
@@ -111,14 +111,14 @@ PLACE 3250H
         STRING "PREÇO:          "
         STRING "                "
         STRING "TOTAL:          " ; 9 Celulas para por o valor
-    MenuGuardaRegistos:                         ; ALTERAR
-        STRING " MENU PRINCIPAL "
-        STRING "                "
-        STRING "1  -  BALANÇA   "
-        STRING "2  -  REGISTOS  "
+    MenuGuardaRegistos:                         
+        STRING " DESEJA         "
         STRING "----------------"
-        STRING "3  -  LIMPA     "
-        STRING "      REGISTOS  "
+        STRING "1  -  GUARDAR   "
+        STRING "      REGISTO   "
+        STRING "----------------"
+        STRING "2  -  SAIR DA   "
+        STRING "      BALANCA  "
     MenuReset:
         STRING " QUERES APAGAR  "
         STRING " OS REGISTOS ?  "
@@ -178,14 +178,10 @@ CicloOpcao:
     CMP R3, OReset
     JZ PulaReset
     MOV R0, MensagemErro
-    MOV R10, 1
+    MOV R10, 0
     MOV [R0], R10                     ; Erro Opcao
     CALL RotinaErro
     JMP InicioMenu
-
-
-
-
 ; --------------------------------- ;
 ; RotinaBalanca ;
 ; --------------------------------- ;
@@ -196,7 +192,7 @@ RotinaBalanca:
     MOV R0, CANCEL                  
     MOVB R4, [R0]                   ; R4 Guarda o valor CANCEL
     CMP R4, 1
-    JEQ FIMInicio
+    JEQ InicioMenu
     MOV R0, PESO
 CicloPeso:
     MOV R1, [R0]                   ; R1 guarda o valor do peso
@@ -222,10 +218,10 @@ CicloOpcaoProduto:
     JEQ CicloOpcaoProduto
     MOV R0, OK                      
     MOVB R3, [R0]                   ; R3 Guarda o valor do OK
-    CMP R3, 1
+    CMP R3, 0
     JNE CicloOpcaoProduto
     MOV R2, Tabela
-    ADD R2, 6                      ; Endereco do primeiro codigo do produto
+    ADD R2, 6                       ; Endereco do primeiro codigo do produto
     ADD R2, 5
     MOV R0, TabelaMaxima            ; TabelaMaxima igual o tamanho da tabela + 1 (25)
     MOV R7, 0                       ; R7 sera o indice
@@ -240,19 +236,22 @@ OpcaoProduto:
     ADD R2, R8                      ; Avanca para o proximo codigo
     JMP OpcaoProduto  
 FimCiclo:
+    MOV R10, MensagemErro
+    MOV R0, 0
+    MOV R0, [R10]
     CALL RotinaErro
     JMP CicloChange
 CalculaPreco:
     ; R1 Guarda o peso  
     ADD R2, 2                       ; Endereco da parte inteira do valor
-    MOVB R6, [R2]                    ; R6 guarda a parte inteira do valor
+    MOVB R6, [R2]                   ; R6 guarda a parte inteira do valor
     MUL R6, R1
     JV ErroOverflow
     ADD R2, 2                       ; Endereco da parte fracionaria do valor
-    MOVB R7, [R2]                    ; R7 guarda a parte fracionaria do valor  
+    MOVB R7, [R2]                   ; R7 guarda a parte fracionaria do valor  
     MUL R7, R1
     JV ErroOverflow
-    CALL AtualizaDisplay            ; R5 - Produto, R6 - PrecoInteiro, R7 - PrecoFracionario, R1 - PESO
+    CALL AtualizaDisplay            ; R5 - Codigo do produto, R6 - PrecoInteiro, R7 - PrecoFracionario, R1 - PESO
     MOV R2, MenuGuardaRegistos
     CALL MostraDisplay
     CALL LimpaPerifericos
@@ -267,7 +266,7 @@ CicloOpcaoRegistos:
     JEQ FIMBalanca
 ErroOverflow:
     MOV R0, MensagemErro
-    MOV R10, 2
+    MOV R10, 1
     MOV [R0], R10                     ; Erro Overflow
     CALL RotinaErro
 FIMBalanca:
@@ -276,12 +275,8 @@ FIMBalanca:
 OpcaoExcedida:
     CALL AtualizaDisplay
     JMP CicloPeso
-
 PulaReset:
     JMP FuncaoReset
-
-FIMInicio:
-    JMP InicioMenu
 AtalhoGuarda:
     JMP GuardaRegistos
 ; --------------------------------- ;
@@ -296,30 +291,39 @@ AtalhoGuarda:
         CMP R2, 0
         JEQ ErroRegistos
         MOV R0, Display
+        MOV R4, [R0]                    ;  R4 guarda o endereco do primeiro registo
     CicloMostraRegisto:
         CALL LimpaDisplay
         SUB R2, 1
+        MOVB [R0], R1                   ; Print do codigo do Produto
+        ADD R0, 2                   
+        ADD R1, 2
         MOVB [R0], R1                   ; Print do Peso
-        ADD R0, 1                   
-        ADD R1, 1
-        MOVB [R0], R1                   ; Print do valor Total
+        ADD R0, 2                   
+        ADD R1, 2
+        MOVB [R0], R1                   ; Print da parte inteira do preco
+        ADD R0, 2                   
+        MOV R9, 46                      ; Caractere de vírgula
+        MOVB [R0], R9
+        ADD R0, 2   
+        ADD R1, 2
+        MOVB [R0], R1                
         CMP R2, 0                       ; Verifica se chegou no final dos registos
         JEQ FimHistorico
-        ADD R1, 1                       ; Proximo Registo
-        MOV R8, 15
-        ADD R0, R8                      ; Proxima Linha 
+        MOV R5, 15
+        ADD R4, R5                      ; Proximo registo
+        MOV R0, Display
+        ADD R0, R5                      ; Proxima Linha do display
         JMP CicloMostraRegisto
-
     FimHistorico:
         MOV R0, CANCEL 
         MOV R1, [R0]                 
         CMP R1, 1
         JEQ FIMInicio
         JMP FimHistorico
-
     ErroRegistos:
         MOV R0, MensagemErro
-        MOV R10, 3
+        MOV R10, 2
         MOV [R0], R10                      ; Erro Registos 
         CALL RotinaErro
         JMP FIMInicio
@@ -372,7 +376,8 @@ AtalhoGuarda:
         POP R1
         POP R0
         RET
-
+FIMInicio:
+    JMP InicioMenu
     LimpaDisplay:
     PUSH R0
     PUSH R1
@@ -389,24 +394,13 @@ AtalhoGuarda:
     POP R1
     POP R0
     RET
-
-
-
-
-
-; PARA FAZER
-
-AtualizaDisplay: ;Peso == 0
-    ; R1 - PESO, 
-    JMP FIMInicio
+AtualizaDisplay:
+    JMP InicioMenu
 FuncaoReset:
     MOV R2, MenuReset
     CALL LimpaPerifericos
     CALL MostraDisplay
-    MOV R0, OK
-    MOV R1, [R0]
-    CMP R1, 0
-    JZ FIMInicio
+    CALL ConfirmaOK
 CicloReset:
     MOV R2, QuantidadeRegistos  ; R2 guarda o endereco da quantidade de registos
     MOV R1, [R2]                ; R1 guarda a quantidade de registos
@@ -422,11 +416,15 @@ CicloReset:
 
 
 GuardaRegistos: ;R5 - Produto, R6 - PrecoInteiro, R7 - PrecoFracionario, R1 - PESO
-    MOV R10, QuantidadeRegistos ; R10 guarda o endereco da quantidade de registos 
-    MOV R3, [R10]               ; R3 guarda a quantidade de registos
+    MOV R2, MenuGuardaRegistos
+    CALL LimpaPerifericos
+    CALL MostraDisplay
+    MOV R9, QuantidadeRegistos ; R9 guarda o endereco da quantidade de registos 
+    MOV R3, [R9]               ; R3 guarda a quantidade de registos
     MOV R0, BancoRegistos       ; R0 guarda o endereco do banco de registos
     SHL R3, 2                   ; R3 ← R3 * 4
-    ADD R3, [R10]               ; R3 ← R3 + quantidade → total = quantidade * 5                   
+    MOV R8, [R9]
+    ADD R3, R8               ; R3 ← R3 + quantidade → total = quantidade * 5                   
     ADD R0, R3                  ; Vai a posicao livre ddo banco de registo
     ; Guardar os dados
     MOVB [R0], R5               ; Produto
@@ -435,14 +433,81 @@ GuardaRegistos: ;R5 - Produto, R6 - PrecoInteiro, R7 - PrecoFracionario, R1 - PE
     ADD R0, 2
     MOVB [R0], R6               ; Parte inteira do preço
     ADD R0, 2
-    MOV R9, 46                  ; Caractere de vírgula
-    MOVB [R0], R9
-    ADD R0, 2
     MOVB [R0], R7               ; Parte fracionária do preço
-    MOV R3, [R10]               ; Voltar a buscar quantidade
+    MOV R3, [R9]               ; Voltar a buscar quantidade
     ADD R3, 1
-    MOV [R10], R3
+    MOV [R9], R3
     JMP FIMBalanca
 
 RotinaErro:
-    JMP FIMInicio
+    PUSH R0
+    PUSH R1
+    PUSH R2
+    MOV R0, MensagemErro
+    MOV R1, [R0]
+    CMP R1, 0
+    JZ MostraErroOpcao
+    CMP R1, 1
+    JZ MostraErroOverflow
+    CMP R1, 2
+    JZ MostraErroRegistos
+MostraErroOpcao:
+    MOV R2, ErroOpcao
+    CALL MostraDisplay
+    CALL LimpaPerifericos
+    CALL ConfirmaOK
+    JMP FimRotina
+MostraErroOverflow:
+    MOV R2, Overflow
+    CALL MostraDisplay
+    CALL LimpaPerifericos
+    CALL ConfirmaOK
+    JMP FimRotina
+MostraErroRegistos:
+    MOV R2, ErroFaltaRegistos
+    CALL MostraDisplay
+    CALL LimpaPerifericos
+    CALL ConfirmaOK
+    JMP FimRotina
+FimRotina:
+    POP R2
+    POP R1
+    POP R0
+    RET
+ConfirmaOK:
+    PUSH R0 
+    MOV R0, OK
+    CMP R0, 0
+    JZ ConfirmaOK
+    POP R0
+    RET
+
+
+; MENSAGENS DE ERRO
+
+ErroOpcao:
+    String	"****************" 
+    String	"Mensagem de erro" 
+    String	"                "
+    String	" Opção errada   "
+    String	" Para continuar "
+    String	"     OK = 1     "
+    String	"****************" 
+
+Overflow:
+    String	"****************" 
+    String	"OCORREU OVERFLOW" 
+    String	" NÃO É POSSIVEL "
+    String	" REGISTAR       "
+    String	" Para continuar "
+    String	"     OK = 1     "
+    String	"****************" 
+
+ErroFaltaRegistos:
+    String	"****************" 
+    String	"Mensagem de erro" 
+    String	" NÃO POSSUI     "
+    String	" REGISTOS       "
+    String	" Para continuar "
+    String	"     OK = 1     "
+    String	"****************" 

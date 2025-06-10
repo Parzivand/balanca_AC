@@ -25,3 +25,4 @@ RESUMO:
     Olhar registos:
         Verifica se a qtd de registos e 0 e aparece o erro
         
+Registos: codigoProduto / Peso / PrecoInteiro / PrecoFracionado

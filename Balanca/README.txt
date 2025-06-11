@@ -26,3 +26,13 @@ RESUMO:
         Verifica se a qtd de registos e 0 e aparece o erro
         
 Registos: codigoProduto / Peso / PrecoInteiro / PrecoFracionado
+
+
+
+*** FEITOS: ***
+ProgramaPrincipal
+LimpaPeriferios
+LimpaDisplay
+MostraDisplay
+
+FuncaoReset

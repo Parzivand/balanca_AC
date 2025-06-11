@@ -404,9 +404,23 @@
         CALL LimpaPerifericos
         CALL MostraDisplay
         CALL ConfirmaOK
+    CicloOpcaoReset:
+        MOV R0, SEL_NR_MENU
+        MOVB R1, [R0]
+        CMP R1, 0
+        JZ CicloOpcaoReset
+        CMP R1, 1
+        JZ CicloReset
+        CMP R1, 2
+        JZ FIMInicio
+        MOV R0, MensagemErro            ; Opcao invalida
+        MOV R10, 0
+        MOV [R0], R10                   ; Erro Opcao
+        CALL RotinaErro
+        JMP FIMInicio 
     CicloReset:
         MOV R2, QuantidadeRegistos  ; R2 guarda o endereco da quantidade de registos
-        MOV R1, [R2]                ; R1 guarda a quantidade de registos
+        MOVB R1, [R2]                ; R1 guarda a quantidade de registos
         MOV R4, 0
         CMP R1, R4
         JZ FimReset              
@@ -444,21 +458,24 @@
         MOV R2, MenuGuardaRegistos
         CALL LimpaPerifericos
         CALL MostraDisplay
+        ; Calculo da posicao livre no banco de registos
         MOV R2, QuantidadeRegistos  ; R2 guarda o endereco da quantidade de registos 
         MOV R3, [R2]                ; R3 guarda a quantidade de registos
+        MOV R4, R3
+        SHL R3, 1                   ; R3 * 2
+        ADD R3, R4
+        SHL R3, 1                   ; R3 * 6
         MOV R0, BancoRegistos       ; R0 guarda o endereco do banco de registos
-        SHL R3, 2                   ; R3 ← R3 * 4
-        MOV R4, [R2]                ; R4 guarda uma copia da quantidade de registos
-        ADD R3, R4                  ; R3 ← R3 + quantidade → total = quantidade * 5                   
         ADD R0, R3                  ; Vai a posicao livre do banco de registo
         ; Guardar os dados
         MOVB [R0], R5               ; Produto
-        ADD R0, 2
-        MOVB [R0], R1               ; Peso
+        ADD R0, 1 
+        MOV [R0], R1                ; Peso (2 bytes)
         ADD R0, 2
         MOVB [R0], R6               ; Parte inteira do preço
-        ADD R0, 2
+        ADD R0, 1
         MOVB [R0], R7               ; Parte fracionária do preço
+        ; Atualiza QuantidadeRegistos
         MOV R3, [R2]                ; Voltar a buscar quantidade
         ADD R3, 1
         MOV [R2], R3
@@ -477,10 +494,10 @@
     ; --------------------------------- ;
 
     MostraDisplay:
-        PUSH R3
         PUSH R0
         PUSH R1
         PUSH R2
+        PUSH R3
         MOV R0, Display
         MOV R1, Fim_Display
     Ciclo_MostraDisplay:
@@ -490,10 +507,10 @@
         ADD R2, 1
         CMP R0, R1
         JLE Ciclo_MostraDisplay
+        POP R3
         POP R2
         POP R1
         POP R0
-        POP R3
         RET
 
     LimpaPerifericos:
